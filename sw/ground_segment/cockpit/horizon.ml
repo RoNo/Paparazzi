@@ -78,7 +78,7 @@ let ruler = fun ?(index_on_right=false) ~text_props ~max ~scale ~w ~index_width 
     done in
 
   (** Yellow index *)
-  let _ = GnoCanvas.line ~points:[|0.;0.;w;0.|] ~fill_color:"yellow" root in
+  let _ = GnoCanvas.line ~points:[|0.;0.;w;0.|] ~props:[`WIDTH_PIXELS 2] ~fill_color:"yellow" root in
   let s = index_width in
   let idx = GnoCanvas.polygon ~points:[|0.;0.;-.s;s/.2.;-.s;-.s/.2.|] ~fill_color:"yellow" root in
   if index_on_right then
@@ -103,12 +103,12 @@ class h = fun ?packing size  ->
   let pitch_scale = fun pitch -> pitch *. size2 *. 2. in
   let speed_scale = size2 /. 10. in
   let alt_scale = size2 /. 50. in
-  let speed_width = size2/.5. in
-  let alt_width = size2/.2.5 in
-  let index_width = size2 /. 15. in
+  let speed_width = size2/.3. in
+  let alt_width = size2/.2.25 in
+  let index_width = size2 /. 10. in
 
   let xc = left_margin +. speed_width +. size2
-  and yc = size2*.1.1 in
+  and yc = size2*.1.25 in
 
   let text_props = [`FONT "Sans 8"; `ANCHOR `CENTER; `FILL_COLOR "white"] in
 
@@ -116,7 +116,7 @@ class h = fun ?packing size  ->
   let _top = GnoCanvas.rect ~x1:(-.size) ~y1:(-.size2*.5.) ~x2:size ~y2:0. ~fill_color:"#0099cb" disc
   and _bottom = GnoCanvas.rect ~x1:(-.size) ~y1:0. ~x2:size ~y2:(size2*.5.) ~fill_color:"#986701" disc
   and _line = GnoCanvas.line ~props:[`WIDTH_PIXELS 4] ~points:[|-.size;0.;size;0.|] ~fill_color:"white" disc
-  and _ = GnoCanvas.line ~points:[|0.;-.size2;0.;size2|] ~fill_color:"white" disc
+  and _ = GnoCanvas.line ~points:[|0.;-.size;0.;size|] ~fill_color:"white" disc  
  in
   let grads = fun ?(text=false) n s a b ->
     for i = 0 to n do
@@ -138,6 +138,8 @@ class h = fun ?packing size  ->
     grads 5 (size2/.7.) 10. 5.;
     grads ~text:true 5 (size2/.5.) 10. 10. in
 
+
+
   let mask = GnoCanvas.group ~x:xc ~y:yc canvas#root in
   let _center = GnoCanvas.ellipse ~x1:(-3.) ~y1:(-.3.) ~x2:3. ~y2:3. ~fill_color:"black" mask in
   let pi6 = pi/.6. in
@@ -157,27 +159,35 @@ class h = fun ?packing size  ->
     ignore (GnoCanvas.line  ~props:[`WIDTH_PIXELS 4] ~points:[|x;0.;x+.s;0.;x+.s;s|] ~fill_color:"black" mask);
 
     (* Top and bottom graduations *)
-    let g = fun a ->
-      let l = GnoCanvas.line~props:[`WIDTH_PIXELS 2]  ~fill_color:"white" ~points:[|0.;-.size2;0.;-.1.2*.size2|] mask in
-      l#affine_relative (affine_pos_and_angle 0. 0. ((Deg>>Rad)a)) in
-    for i = 0 to 4 do
+    let _line = GnoCanvas.line ~props:[`WIDTH_PIXELS 3] ~points:[|0.;-.size2;0.;-.1.175*.size2|] ~fill_color:"white" mask
+    and g = fun a ->
+     let l = GnoCanvas.line~props:[`WIDTH_PIXELS 2]  ~fill_color:"gray" ~points:[|0.;-.size2;0.;-.1.15*.size2|] mask in
+     l#affine_relative (affine_pos_and_angle 0. 0. ((Deg>>Rad)a)) in
+    
+     for i = 1 to 5 do
       let a = float (i*10) in
       g a; g (-.a)
-    done;
-    let _30 = fun a -> 
-      let t = GnoCanvas.text ~text:"30" ~props:text_props ~x:0. ~y:(-1.1*.size2) mask in
+     done;
+ 
+    let gg = fun a ->    
+      let l = GnoCanvas.line~props:[`WIDTH_PIXELS 3]  ~fill_color:"white" ~points:[|0.;-.size2;0.;-.1.2*.size2|] mask in
+      l#affine_relative (affine_pos_and_angle 0. 0. ((Deg>>Rad)a)) in
+    gg 30.; gg (-30.);
+
+    let _30 = fun a ->    
+      let t = GnoCanvas.text ~text:"30" ~props:text_props ~x:0. ~y:(-1.3*.size2) mask in
       t#affine_relative (affine_pos_and_angle 0. 0. ((Deg>>Rad)a)) in
     _30 30.; _30 (-30.)
-  in
-
+    in
+    
   (* Speedometer on the left side *)
   let speed, mi, mx, lazy_speed = 
     let g = GnoCanvas.group ~x:left_margin ~y:yc canvas#root in
     let r, lazy_ruler = ruler ~text_props ~index_on_right:true ~max:50 ~scale:speed_scale ~w:speed_width ~step:2 ~index_width ~h:(0.75*.size2) g in
     let mx = 
-      GnoCanvas.text ~x:(speed_width/.2.) ~y:(-0.85*.size2) ~props:text_props g
+      GnoCanvas.text ~x:(speed_width/.2.) ~y:(-0.875*.size2) ~props:text_props g
     and mi =
-      GnoCanvas.text ~x:(speed_width/.2.) ~y:(0.80*.size2) ~props:text_props g in
+      GnoCanvas.text ~x:(speed_width/.2.) ~y:(0.875*.size2) ~props:text_props g in
     mx#set [`FILL_COLOR "yellow"];
     mi#set [`FILL_COLOR "yellow"];
     lazy_ruler 0.;
@@ -191,8 +201,8 @@ class h = fun ?packing size  ->
   
   object
     method set_attitude = fun roll pitch ->
-      disc#affine_absolute (affine_pos_and_angle xc (yc+.pitch_scale pitch) (-.roll))
 
+    disc#affine_absolute (affine_pos_and_angle (xc +. (pitch_scale pitch *. (sin roll))) (yc+.pitch_scale pitch *. (cos roll)) (-.roll))
     val mutable max_speed = 0.
     val mutable min_speed = max_float
     method set_speed = fun (s:float) ->
@@ -226,6 +236,8 @@ class pfd ?(visible = fun _ -> true) (widget: GBin.frame) =
 object
   method set_attitude roll pitch =
     _lazy (horizon#set_attitude ((Deg>>Rad)roll)) ((Deg>>Rad)pitch)
+
+
   method set_alt (a:float) = _lazy horizon#set_alt a
   method set_climb (_c:float) = ()
   method set_speed (c:float) = _lazy horizon#set_speed c
