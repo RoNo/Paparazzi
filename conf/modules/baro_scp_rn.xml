@@ -10,13 +10,12 @@
     <file name="baro_scp_rn.h"/>
   </header>
   <init fun="baro_scp_init()"/>
-  <periodic fun="baro_scp_periodic()" freq="9"/> <!--20110404 1.8-->
+  <periodic fun="baro_scp_periodic()" freq="9"/>
   <event fun="baro_scp_event()"/>
   <makefile target="ap">
-<define name="USE_BARO_SCP_RN"/>
+    <define name="USE_BARO_SCP_RN"/>
     <file name="baro_scp_rn.c"/>
     <define name="SPI_MASTER"/>
     <define name="USE_SPI"/>
   </makefile>
 </module>
-
